@@ -1,52 +1,75 @@
 # Security Audit for Linux Servers
 
-Автоматический аудит безопасности Linux-серверов через SSH + Claude.
+Automated security audit for Linux servers via SSH + Claude AI.
 
-## Файлы
+## Files
 
 ```
-security_checkup.sh  — Сбор данных с сервера
-security_audit.sh    — Linux/macOS версия
-security_audit.ps1   — Windows PowerShell версия
-security_audit.bat   — Windows CMD версия
-prompt.md            — Полные инструкции (для справки)
+security_checkup.sh   — Data collection script (runs on remote server)
+security_audit.ps1    — Windows PowerShell launcher
+security_audit.bat    — Windows CMD wrapper
+security_audit.sh     — Linux/macOS launcher
+prompt.md             — Full prompt reference
+output.md             — Generated report
 ```
 
-## Использование
+## Usage
 
-**Linux/macOS:**
-```bash
-./security_audit.sh servername
+### Windows (CMD or PowerShell)
+
+```cmd
+.\security_audit.bat servername
 ```
 
-**Windows PowerShell:**
+Or directly:
+
 ```powershell
 .\security_audit.ps1 servername
 ```
 
-**Windows CMD:**
-```cmd
-security_audit.bat servername
+You will be prompted for the sudo password securely.
+
+### Linux/macOS
+
+```bash
+./security_audit.sh servername
 ```
 
-## Что делает
+You will be prompted for sudo password via SSH TTY.
 
-1. Подключается к серверу по SSH
-2. Запускает `security_checkup.sh` для сбора данных
-3. Отправляет вывод в Claude для анализа
-4. Выдаёт отчёт с командами для исправления
+## What It Does
 
-## Требования
+1. Copies `security_checkup.sh` to the target server
+2. Runs it with sudo to collect security data
+3. Sends output to Claude for analysis
+4. Generates a report with findings and fix commands
+5. Saves report to `output.md`
 
-- SSH-доступ к серверу (лучше по ключу)
-- `claude` CLI в PATH
-- bash
+## Data Collected
 
-## Пример вывода
+- SSH configuration (hardening settings, duplicates)
+- Firewall status (UFW/firewalld/iptables)
+- Fail2ban status and banned IPs
+- Users with login shells
+- Sudo configuration
+- Open ports and listening services
+- Pending security updates
+- World-writable files in /etc
+- SUID/SGID binaries
+- Docker containers
+- Recent auth failures
+
+## Requirements
+
+- SSH access to target server
+- `claude` CLI installed and in PATH
+- Target server: sudo access for the SSH user
+
+## Example Output
 
 ```
 ### Server Security Report: servername
-**Date:** 2026-01-11
+**Date:** 2026-01-12
 
 #### Summary
 | Category | Status |
@@ -61,7 +84,7 @@ security_audit.bat servername
 
 **CRITICAL: Password Authentication Enabled**
 - Problem: PasswordAuthentication set to yes
-- Risk: Brute force attacks
+- Risk: Brute force attacks possible
 - Fix:
 ```bash
 sed -i 's/^PasswordAuthentication yes/PasswordAuthentication no/' /etc/ssh/sshd_config
@@ -69,31 +92,32 @@ systemctl restart sshd
 ```
 
 #### Positive Findings
-- SSH on non-standard port
-- UFW firewall active with DROP policy
+- UFW firewall active with default deny
 - fail2ban protecting sshd
 - Public key authentication enabled
 ```
 
-## Интеграция с агентской системой
+## Customization
+
+Add checks to `security_checkup.sh`:
+
+```bash
+echo "=== MY CUSTOM CHECK ==="
+# your commands here
+echo ""
+```
+
+## Integration
 
 ```python
 import subprocess
 
 def security_audit(host: str) -> str:
     result = subprocess.run(
-        ["./security_audit.sh", host],
+        ["powershell", "-File", "security_audit.ps1", host],
         capture_output=True,
-        text=True
+        text=True,
+        input="your_sudo_password"  # or prompt user
     )
     return result.stdout
-```
-
-## Кастомизация
-
-Добавить проверки в `security_checkup.sh`:
-```bash
-echo "=== MY CHECK ==="
-# commands
-echo ""
 ```

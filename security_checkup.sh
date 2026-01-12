@@ -17,8 +17,8 @@ echo ""
 
 echo "=== SSH CONFIG DUPLICATES ==="
 for param in PermitRootLogin PasswordAuthentication PubkeyAuthentication PermitEmptyPasswords X11Forwarding; do
-    count=$(grep -c "^$param" /etc/ssh/sshd_config 2>/dev/null || echo 0)
-    if [ "$count" -gt 1 ]; then
+    count=$(grep -c "^$param" /etc/ssh/sshd_config 2>/dev/null || true)
+    if [ "${count:-0}" -gt 1 ] 2>/dev/null; then
         echo "DUPLICATE: $param appears $count times:"
         grep -n "^$param" /etc/ssh/sshd_config
     fi

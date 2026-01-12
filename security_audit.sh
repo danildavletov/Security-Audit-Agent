@@ -14,8 +14,18 @@ fi
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
+TEMP_OUTPUT=$(mktemp)
+trap "rm -f $TEMP_OUTPUT" EXIT
+
 echo "Collecting security data from $HOST..." >&2
-OUTPUT=$(ssh "$HOST" "bash -s" < "$SCRIPT_DIR/security_checkup.sh" 2>&1)
+scp -q "$SCRIPT_DIR/security_checkup.sh" "$HOST":/tmp/security_checkup.sh
+
+# Run with TTY, save output on remote, then fetch
+ssh -t "$HOST" "sudo bash /tmp/security_checkup.sh > /tmp/audit_output.txt 2>&1; rm /tmp/security_checkup.sh"
+scp -q "$HOST":/tmp/audit_output.txt "$TEMP_OUTPUT"
+ssh "$HOST" "rm /tmp/audit_output.txt" 2>/dev/null
+
+OUTPUT=$(cat "$TEMP_OUTPUT" | tr -d '\r')
 
 echo "Analyzing with Claude..." >&2
 claude -p "You are a Linux security auditor. Analyze server output and generate report.
