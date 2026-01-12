@@ -59,4 +59,4 @@ List what is properly configured.
 $OUTPUT
 --- END ---
 
-Generate the security report." --print
+Generate the security report." --print | tee "$SCRIPT_DIR/output.md"

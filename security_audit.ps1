@@ -65,4 +65,5 @@ $Output
 Generate the security report.
 "@
 
-claude -p $Prompt --print
+$OutputFile = Join-Path $ScriptDir "output.md"
+claude -p $Prompt --print | Tee-Object -FilePath $OutputFile
